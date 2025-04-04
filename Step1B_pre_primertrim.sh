@@ -1,28 +1,13 @@
 #!/bin/bash
 
-#SBATCH --job-name=Template_Primer_Pre_job
-#SBATCH --account=schultzlab -p schultzlab,nsoe-it,common
-#SBATCH --array=01-48
-#SBATCH --output=/path_to_sequences/Template_Primer_Pre_array_job.%A_%a.out
-#SBATCH --error=/path_to_sequences/Template_Primer_Pre_array_job.%A_%a.err
-#SBATCH --ntasks=10
-#SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=lag66@duke.edu
-
-# the fastest way to rename paths in this script is to Find "/path_to_sequences" and Replace it with what corresponds to your "/work/NETID/RUN1" # 
-
 # --------------------------------------------------------------------------------------------------------------------- #
 ################ Preprocessing ## Filter for quality and size using Nanofilt (https://github.com/wdecoster/nanofilt) ################
 
-### This script is built with the expectation that you are working in a unique DCC folder for each run (/work/lag66/RUN1)
-### make a folder to hold the zipped fastq files within the run folder (/work/lag66/RUN1/fastq_pass)
-### then upload the fastq_pass barcode files that correspond to your samples into that folder (will upload as /work/lag66/RUN1/fastq_pass/barcodeXX/X.fastqz)
-### then upload the file_list.txt file to run folder
+### This script is built with the expectation that you are working in a unique folder for each run 
+### There should be a file_list.txt file of barcode names 
 
 ################ the following should have happened before this script runs ################
 ## FASTQ files demultiplexed and barcodes removed by GridION MinKNOW ##
-## transferred to DCC /path_to_sequences/fastq_pass
-## file_list.txt transferred to DCC /path_to_sequences
 
 # --------------------------------------- To Do --------------------------------------- #
 # change the following
@@ -79,9 +64,6 @@ fi
 
 conda deactivate
 
-echo "SLURM_JOBID: " $SLURM_JOBID
-echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
-echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
 echo $(date)
 
 # ----------------------------------------------------------------------------------
