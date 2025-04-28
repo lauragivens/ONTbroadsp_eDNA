@@ -4,17 +4,6 @@ library(tidyverse)
 library(Biostrings)
 library(dplyr)
 
-#d <- file.path("/path_to_sequences")
-#primer1 <- 18S
-#primer2 <- 12S
-#mincluster <- 100
-#inputprimer1 <- ""$primer1"_mapped_polished.fasta"
-#inputprimer2 <- ""$primer2"_mapped_polished.fasta"
-
-#outputprimer1 <- ""$primer1"_mapped_polished_min"$mincluster""
-#outputprimer2 <- ""$primer2"_mapped_polished_min"$mincluster""
-
-
 setwd("/path_to_sequences/cdhit")
 fasta18S <- readDNAStringSet("18S_mapped_polished.fasta")
 fasta12S <- readDNAStringSet("12S_mapped_polished.fasta")
@@ -26,7 +15,6 @@ length(fasta12S)
 length(fastaCOI)
 length(fastaBelow)
 
-#SeqTable <- c(fasta18S,fasta12S)
 SeqTable <- c(fasta18S,fastaCOI,fasta12S,fastaBelow) 
 length(SeqTable)
 

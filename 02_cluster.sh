@@ -1,30 +1,11 @@
 #!/bin/bash
 
 #SBATCH --job-name=Template_CDHIT
-#SBATCH --account=schultzlab -p schultzlab,nsoe-it,common
 #SBATCH --array=01-48%5
-#SBATCH --output=/path_to_sequences/outfile/outfileCDHIT/Template_CDHIT_array.%A_%a.out
-#SBATCH --error=/path_to_sequences/outfile/outfileCDHIT/Template_CDHIT_array.%A_%a.err
-#SBATCH --ntasks=10
-#SBATCH --mem=15G
-#SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=lag66@duke.edu
-
-# the fastest way to rename paths in this script is to Find "path_to_sequences" and Replace it with what corresponds to your "/work/NETID/RUN1" # 
-# in array, the %5 restricts the number of jobs running at a time to 5
-# --------------------------------------------------------------------------------------------------------------------- #
-## FASTQ files demultiplexed and barcodes removed by GridION MinKNOW ##
-## transferred to DCC /work/lag66/fastq_pass
-## Barcode files were concatenated and filtered by size in preprocessing step
-
-## this script uses cd-hit to cluster sequences in each barcode by 90% similarity
-## then only clusters with >mincluster sequences in them are selected for mapping and polishing
-## we end with racon
 
 # --------------------------------------- load modules --------------------------------------- #
-source /hpc/group/schultzlab/lag66/miniconda3/etc/profile.d/conda.sh
+#source /conda/location/path #add path to conda source if necessary
 echo "activate cd-hit"
-echo
 conda activate cd-hit #this conda environment contains the packages seqtk and cd-hit
 echo "load modules"
 module load Minimap2/2.15 
@@ -32,8 +13,6 @@ module load samtools/1.10
 module load Racon/1.4.20-rhel8
 module load compatbin
 echo
-# --------------------------------------- To Do --------------------------------------- #
-# change the following 
 
 d="/path_to_sequences"
 clustering=0.95 #max=1
@@ -89,7 +68,6 @@ echo
 # --------------------------------------- cluster --------------------------------------- #
 echo "test if files exist to continue"
 [ -f "$fasta" ] && echo " "$fasta" exists" || (echo " "$fasta" does not exist, exiting" && exit)
-echo
 echo 
 echo "fastq file was converted to fasta"
 echo
@@ -97,17 +75,7 @@ echo "begin clustering with cd-hit-est"
 echo "cd-hit-est is specifically used for nucleotide data"
 echo "generation of "$clustering" similarity clusters (max = 1)"
 echo
-echo
-echo
 cd-hit-est -i "$fasta" -o $d/cdhit/"$barcodeID"/"$barcodeID"_cluster"$clusteringlong" -c "$clustering" -n 10 -d 0 -M 0 -T 0 -g 1
-# c denotes clustering percentage
-# n indicates word length (10 is default)
-# d indicates length of description in .clstr file, set to 0 takes the fasta defline and stops at first space
-	## d needs to be 0 for make_multi_seq script to work
-# M indicates memory limit in MB, set to 0 indicates no memory limit
-# T indicates number of threads, set to 0 means all CPUs will be used
-echo
-echo
 echo
 echo "output of cd-hit-est is file of representative sequences and a text file of lists of clusters"
 echo "sequence file needs fasta extension added"
@@ -127,13 +95,10 @@ echo "generate separate fasta file for each cluster over specifed size"
 echo "minimum number of sequences in clusters is "$mincluster" "
 cd $d/cdhit/"$barcodeID"
 make_multi_seq.pl "$fasta" "$barcodeID"_cluster"$clusteringlong".clstr clustermin0 0 # make a folder with fasta files for ALL clusters
-
 make_multi_seq.pl "$fasta" "$barcodeID"_cluster"$clusteringlong".clstr "$outfolder" "$mincluster"
 # basic command is make_multi_seq.pl input.fasta input.clstr outputfolder clustersize
-
 echo
 conda deactivate
-
 echo "test if files exist to continue"
 echo
 #z is true if the length of the string is 0; n is true if the length is nonzero
@@ -145,55 +110,14 @@ echo
 cd $d/cdhit/"$barcodeID"/"$outfolder"
 
 for f in *; do case "$f" in *.*) echo skipped $f;; *) mv "$f" "$barcodeID"_cluster"$f".fasta; esac; done # looks at all of the files within the outfolder directory, any that have a '.' are skipped (and you are told they're skipped), the rest have the fasta extension added
+echo
 
-echo
-echo
 clusterfolder=""$d"/cdhit/"$barcodeID""
 [ -d ""$clusterfolder"/"$outfolder"/mapped" ] && echo "Directory $clusterfolder/"$outfolder"/mapped exists, proceed." || echo "Directory $clusterfolder/"$outfolder"/mapped does not exist, making directory." && mkdir $clusterfolder/"$outfolder"/mapped
 [ -d ""$clusterfolder"/"$outfolder"/polished" ] && echo "Directory $clusterfolder/"$outfolder"/polished exists, proceed." || echo "Directory $clusterfolder/"$outfolder"/polished does not exist, making directory." && mkdir $clusterfolder/"$outfolder"/polished && mkdir $clusterfolder/"$outfolder"/polished/renamed
 [ -d ""$clusterfolder"/"$outfolder"/referenceFASTA" ] && echo "Directory $clusterfolder/"$outfolder"/referenceFASTA exists, proceed." || echo "$clusterfolder/"$outfolder"/referenceFASTA does not exist, making directory." && mkdir $clusterfolder/"$outfolder"/referenceFASTA
-echo "at this point, you should have a SequencingRunDirectory. Inside the directory is a Barcodes folder and a Nanofilt folder with one fastq file per barcode"
-echo "Inside the directory is a cdhit directory with folders for each barcode"
-echo "Inside the cdhit/barcode folder is a directory from make_multi_seq.pl with the sequences above your designated minimum clustering quantity"
-echo "This directory contains a text file of the cluster names and the sequences making up each cluster, a fasta file of representative clusters, and the cluster directory"
-echo "Inside the cluster directory is one fasta file per cluster"
-echo "Inside the cdhit/barcode folder is also a directory from make_multi_seq.pl with every cluster"
-echo "We will be using that directory to identify all the clusters that are below the designated threshold"
-echo 
-echo "this path is built like so"
-echo "/SequencingRunDirectory"
-echo "/SequencingRunDirectory/Nanofilt"
-echo "/SequencingRunDirectory/cdhit"
-echo "/SequencingRunDirectory/cdhit/barcode01"
-echo "/SequencingRunDirectory/cdhit/barcode01/"$outfolder""
-echo "/SequencingRunDirectory/cdhit/barcode01/"$outfolder"/barcode01_cluster1.fasta"
-echo "/SequencingRunDirectory/cdhit/barcode01/"$outfolder"/barcode01_etc.fasta"
-echo
-echo "if you were to look inside the fasta file, you would have only the raw sequences from the Nanofilt file that are assigned to that individual cluster"
-echo
-echo "the remaining actions are performed inside the cdhit/barcode/cluster file"
-echo "thus each array (which defines the barcode the script is run on) will also have loops (which will ensure the script is run on each cluster within the barcode)"
-echo
-# --------------------------------------- pipeline --------------------------------------- #
-# minimap2 manpage: https://lh3.github.io/minimap2/minimap2.html
-# basic structure: minimap2 -a ref.fa query.fq > alignment.sams
-# minimap can work on fasta or fastq files
-	# -a tells minimap2 to generate alignments in SAM format
-	# -x is a preset to apply a set of options based on the follow-up map argument
-	# map-ont uses minimizers as seeds to map long noisy reads against a reference; Align noisy long reads of ~10% error rate to a reference genome. This is the default mode.
-	# ava-ont uses minimizers as seeds to find overlaps between long reads; Oxford Nanopore all-vs-all overlap mapping (-k15 -Xw5 -e0 -m100 -r2k).
-
-# racon manpage:
-# basic structure: sequences	 overlaps	 targets	
-	
-#clusterfolder=" "$d"/cdhit/"$barcodeID" "
-#file=" "$clusterfolder"/"$outfolder"/file.fasta "
-
 echo "change into cluster directory"
 cd $clusterfolder/"$outfolder"
-echo "reminder that clusterfolder directory is /work/lag66/OctMCF/cdhit/"$barcodeID"/ "
-echo
-echo 
 echo "choose one of the fasta sequences in each cluster as a reference"
 # we were using AVA to generate consensus sequences, so since with cd-hit we've already got the consensus sequences grouped we can go to RVC
 echo "map sequences in each cluster to the reference with minimap"
@@ -225,38 +149,29 @@ echo "adding quantities into file header"
         echo "clusterName is "$clusterName""
                 echo "clusterID is "$clusterID""
         echo "newclusterID is "$newclusterID""
-        
-		#awk -v barcodeID="$barcodeID" -v quant="$quant" '{print ">"barcodeID";size="quant; getline; print}' "$clusterfolder"/"$outfolder"/polished/"$clusterID"_raconpolish.fasta > "$clusterfolder"/"$outfolder"/polished/renamed/"$clusterID"_quant_newhead.fasta
-		awk -v clusterName="$clusterID" -v quant="$quant" '{print ">"clusterName";size="quant; getline; print}' $clusterfolder/"$outfolder"/polished/"$clusterID"_raconpolish.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant_oldhead.fasta
+        echo
+		awk -v clusterName="$clusterID" -v quant="$quant" '{print ">"clusterName";size="quant; getline; print}' $clusterfolder/"$outfolder"/polished/"$clusterID"_raconpolish.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant.fasta
 
 echo "addition of quantities finished" # results in >barcodexx_clusterxx;size=xx
 echo "adding barcodelabel to identify which barcode 01-48 the sequence belongs to and a label to identify the cluster"
-		
-		#sed '/^>/s/>*/>otu='"$clusterName"';barcodelabel=/' "$clusterfolder"/"$outfolder"/polished/renamed/"$clusterID"_quant_newhead.fasta > "$clusterfolder"/"$outfolder"/polished/renamed/"$clusterID"_renamed_newhead.fasta
-        sed '/^>/s/>*/>barcodelabel='"$barcodeID"';otu=/' $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant_oldhead.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_renamed_oldhead.fasta
-
-                echo "addition of barcode label and unique cluster identifiers finished"
-                echo
+echo
+sed '/^>/s/>*/>barcodelabel='"$barcodeID"';otu=/' $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_renamed.fasta
+echo "addition of barcode label and unique cluster identifiers finished"
+echo
 
 done
 echo "Concatenate all clusters into one fasta file"
-cat $clusterfolder/"$outfolder"/polished/renamed/*_renamed_oldhead.fasta > $clusterfolder/"$barcodeID"_min"$mincluster"_oldhead.fasta
-#cat $clusterfolder/"$outfolder"/polished/renamed/*_renamed_newhead.fasta > $clusterfolder/"$barcodeID"_min"$mincluster"_newhead.fasta
-echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_min"$mincluster"_oldhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_min"$mincluster"_oldhead.fasta)"
-#echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_min"$mincluster"_newhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_min"$mincluster"_newhead.fasta)"
-# note if your minimum cluster size returns too many sequences
-# awk -F "=" '/^>/ {if ($4>100) {print; getline; print}}' barcode*/*all.fasta >> newclustersize.fasta
-# change whatever $4 is greater than to your chosen cutoff
-
+cat $clusterfolder/"$outfolder"/polished/renamed/*_renamed.fasta > $clusterfolder/"$barcodeID"_min"$mincluster".fasta
+echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_min"$mincluster".fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_min"$mincluster".fasta)"
 #  ----------------------------------------------------------------------------
 # now transition to making a file for the sequences below the minimum threshold
 #  ----------------------------------------------------------------------------
-
+#
 #  ----------------------------------------------------------------------------
 # for loop to make sure we're in the right directory to write renamed files 
 #  ----------------------------------------------------------------------------
 cd $clusterfolder 
-
+echo
 # is there a clustersbelow directory or zipped clustersbelow directory? 
 if [ -d clustersbelow"$mincluster" ] ; then 
 	echo "clustersbelow"$mincluster" directory already unzipped" 
@@ -393,7 +308,7 @@ echo $PWD
 # end of for loop to make sure we're in the right directory to write renamed files 
 #  ----------------------------------------------------------------------------
 
-
+echo
 cd $clusterfolder/clustermin0
 for f in *; do case "$f" in *.*) echo skipped $f;; *) mv "$f" "$barcodeID"_cluster"$f".fasta; esac; done
 
@@ -410,31 +325,23 @@ for i in barcode*; do
 	        newclusterID="$(echo "$clusterID" | sed 's/_.*/;otu=/')"
 	        echo "renaming headers; "$clusterID" is made of "$quant" reads"
 	        
-	        #awk -v barcodeID="$barcodeID" -v quant="$quant" '{print ">"barcodeID";size="quant; getline; print}NR==2{exit}' "$clusterID".fasta > $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_quant_newhead.fasta # this is the script to change headers to match vsearch input (not working well)
-			awk -v clusterName="$clusterID" -v quant="$quant" '{print ">"clusterName";size="quant; getline; print}NR==2{exit}' "$clusterID".fasta > $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_quant_oldhead.fasta
+	       awk -v clusterName="$clusterID" -v quant="$quant" '{print ">"clusterName";size="quant; getline; print}NR==2{exit}' "$clusterID".fasta > $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_quant.fasta
 	# results in >barcodexx_clusterxx;size=xx
 	# adding barcodelabel to identify which barcode 01-48 the sequence belongs to and a label to identify the cluster
-    		#sed '/^>/s/>*/>otu='"$clusterName"';barcodelabel=/' $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_quant_newhead.fasta > $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_renamed_newhead.fasta # this is the script to change headers to match vsearch input (not working well)
-			sed '/^>/s/>*/>barcodelabel='"$barcodeID"';otu=/' $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_quant_oldhead.fasta > $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_renamed_oldhead.fasta
+    		sed '/^>/s/>*/>barcodelabel='"$barcodeID"';otu=/' $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_quant.fasta > $clusterfolder/clustersbelow"$mincluster"/renamed/"$clusterID"_renamed.fasta
 	        
 done 
 echo "Concatenate all clusters below threshold into one fasta file"
 
 cd $clusterfolder/clustersbelow"$mincluster"/renamed
-find ./ -type f -name "*renamed_oldhead.fasta" -exec cat {} + > $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_oldhead.fasta
-echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_oldhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_oldhead.fasta)"
-#find ./ -type f -name "*renamed_newhead.fasta" -exec cat {} + > $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_newhead.fasta
-#echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_newhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_newhead.fasta)"
-
+find ./ -type f -name "*renamed.fasta" -exec cat {} + > $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs.fasta
+echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs.fasta)"
 
 #  ----------------------------------------------------------------------------
 # Clean up the folders 
 #  ----------------------------------------------------------------------------
 
 cd $clusterfolder 
-#mkdir $clusterfolder/clustersbelow"$mincluster"/clustersbelow"$mincluster" # too many files for this to work on  
-#mv clustersbelow"$mincluster"/*fasta clustersbelow"$mincluster"/clustersbelow"$mincluster" 
-
 rm -r $clusterfolder/clustermin0
 
 if [ -f $clusterfolder/clustersbelow"$mincluster".zip ] ; then 
@@ -453,25 +360,9 @@ rm -r polished
 zip -r referenceFASTA.zip referenceFASTA
 rm -r referenceFASTA
 
-echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_oldhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_oldhead.fasta)"
-#echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_newhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs_newhead.fasta)"
+echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$mincluster"seqs.fasta)"
 
 echo "SLURM_JOBID: " $SLURM_JOBID
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
 echo $(date)
-
-######## change names in 'assembly' ava minimap.fasta file so that racon will iterate later #########
-#FILERENAME=""$d"/1_AVA/"$barcodeID"_sub50pct_minimap.fasta" # path to input file for renaming
-#awk '/^>/{print ">_seq" ++i; next}{print}' $FILERENAME | sed '/^>/s/>*/>'"$barcodeID"'/' > "$barcodeID"_sub50pct_minimap_renamed.fasta # awk will print '>_seq' and a sequential number after every time it finds '>'; then print the next line; this is passed to sed which will substitute > with >barcodeXX
-
-## understanding if operators, conditional statements, and various bracketing ##
-# https://acloudguru.com/blog/engineering/conditions-in-bash-scripting-if-statements#h-the-basic-rules-of-bash-conditions
-# https://developer.ibm.com/tutorials/l-bash-test/
-# ---------------------------------------------------------------------------------------------------------------------
-## written 08/10/2022 
-## edited 08/26/2022 to update some file tests 
-## edited 12/28/2022 to include clusters below threshold  
-## edited 04/24/2023 to add for loop for naming and making sure we're not over-writing files 
-## edited 12/18/2023 to adjust job name and add more partitions
-## edited 1/23/2024 to add module load compatbin (to load bc for counting fastq seqs)

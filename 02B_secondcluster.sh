@@ -1,20 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=Template_2clus
-#SBATCH --account=schultzlab -p schultzlab,nsoe-it,common
 #SBATCH --array=01-48%5
-#SBATCH --output=/path_to_sequences/outfile/Template_2clus.%A_%a.out
-#SBATCH --error=/path_to_sequences/outfile/Template_2clus.%A_%a.err
-#SBATCH --mem=15G
-#SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=lag66@duke.edu
-
-#set -e 
-#set -e will Exit immediately if a pipeline (which may consist of a single simple command), a list, or a compound command (see SHELL GRAMMAR above), exits with a non-zero status. The shell does not exit if the command that fails is part of the command list immediately following a while or until keyword, part of the test following the if or elif reserved words, part of any command executed in a && or || list except the command following the final && or ||, any command in a pipeline but the last, or if the command's return value is being inverted with !. If a compound command other than a subshell returns a non-zero status because a command failed while -e was being ignored, the shell does not exit. A trap on ERR, if set, is executed before the shell exits. This option applies to the shell environment and each subshell environment separately (see COMMAND EXECUTION ENVIRONMENT above), and may cause subshells to exit before executing all the commands in the subshell. 
-
-source /hpc/group/schultzlab/lag66/miniconda3/etc/profile.d/conda.sh
+echo
+echo
 echo "activate cd-hit"
 echo
+#source /conda/location/path #add path to conda source if necessary
 conda activate cd-hit #this conda environment contains the packages seqtk and cd-hit
 echo "load modules"
 module load Minimap2/2.15
@@ -34,17 +26,8 @@ cd $d
 barcodeID=$(awk "NR==${SLURM_ARRAY_TASK_ID}" file_list.txt)
 clusterfolder=""$d"/cdhit/"$barcodeID""
 cd $clusterfolder
-#fasta="$clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_oldhead.fasta"
-fasta="$clusterfolder/"$barcodeID"_min"$mincluster"_oldhead.fasta"
+fasta="$clusterfolder/"$barcodeID"_min"$mincluster".fasta"
 cd-hit-est -i "$fasta" -o $d/cdhit/"$barcodeID"/"$barcodeID"_cluster"$clusteringlong"_secondary -c "$clustering" -n 10 -d 0 -M 0 -T 0 -g 1
-# c denotes clustering percentage
-# n indicates word length (10 is default)
-# d indicates length of description in .clstr file, set to 0 takes the fasta defline and stops at first space
-	## d needs to be 0 for make_multi_seq script to work
-# M indicates memory limit in MB, set to 0 indicates no memory limit
-# T indicates number of threads, set to 0 means all CPUs will be used
-echo
-echo
 echo
 echo "output of cd-hit-est is file of representative sequences and a text file of lists of clusters"
 echo "sequence file needs fasta extension added"
@@ -74,14 +57,8 @@ conda deactivate
 
 echo "test if files exist to continue"
 echo
-#z is true if the length of the string is 0; n is true if the length is nonzero
 echo
 [ -z "$(ls -A "$d/cdhit/"$barcodeID"/"$outfolder"")" ] && echo "no clusters with more than "$secondmincluster" sequences exist for "$barcodeID" " && exit || echo " there are $(ls $d/cdhit/"$barcodeID"/"$outfolder" | wc -l) clusters for "$barcodeID" "
-#When you run a command in () you're spawning a subshell. So when you call exit within that subshell, you're just exiting it, and not your top level script 
-#https://unix.stackexchange.com/questions/296526/set-e-in-a-subshell
-#[ -z "$(ls -A "$d/cdhit/"$barcodeID"/"$outfolder"")" ] && {echo "no clusters with more than "$secondmincluster" sequences exist for "$barcodeID" " && exit} 
-#using curly braces instead of parentheses did not work
-# note: need to have a space after the opening curly bracket and before echo because apparently bash gets confused if there isn't a space 
 echo
 echo "rename cluster fasta files"
 echo
@@ -95,7 +72,6 @@ cd $clusterfolder/"$outfolder"
 [ -d ""$clusterfolder"/"$outfolder"/referenceFASTA" ] && echo "Directory $clusterfolder/"$outfolder"/referenceFASTA exists, proceed." || echo "$clusterfolder/"$outfolder"/referenceFASTA does not exist, making directory." && mkdir $clusterfolder/"$outfolder"/referenceFASTA
 
 echo "choose one of the fasta sequences in each cluster as a reference"
-# we were using AVA to generate consensus sequences, so since with cd-hit we've already got the consensus sequences grouped we can go to RVC
 echo "map sequences in each cluster to the reference with minimap"
 echo "polish mapped alignments with racon"
 
@@ -119,34 +95,26 @@ echo "performing racon polish"
 echo "renaming headers"
 echo "adding quantities into file header"
 	quant="$(echo "$(grep ';size=' "$file" | cut -d "=" -f4 | awk '{sum += $1} END {print sum}')")"
-	#quant="$(echo "$(grep -c ">" "$file")")"
         clusterName="$(echo "$(echo "$clusterID" | cut -d '_' -f 2)" )"
         newclusterID="$(echo "$clusterID" | sed 's/_.*/;otu=/')"
         echo "cluster is made of "$quant" reads"
         echo "clusterName is "$clusterName""
                 echo "clusterID is "$clusterID""
         echo "newclusterID is "$newclusterID""
-
-		#awk -v barcodeID="$barcodeID" -v quant="$quant" '{print ">"barcodeID";size="quant; getline; print}' "$clusterfolder"/"$outfolder"/polished/"$clusterID"_raconpolish.fasta > "$clusterfolder"/"$outfolder"/polished/renamed/"$clusterID"_quant_newhead.fasta
-		awk -v clusterName="$clusterID" -v quant="$quant" '{print ">"clusterName";size="quant; getline; print}' $clusterfolder/"$outfolder"/polished/"$clusterID"_raconpolish.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant_oldhead.fasta
+		echo
+		awk -v clusterName="$clusterID" -v quant="$quant" '{print ">"clusterName";size="quant; getline; print}' $clusterfolder/"$outfolder"/polished/"$clusterID"_raconpolish.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant.fasta
 
 echo "addition of quantities finished" # results in >barcodexx_clusterxx;size=xx
 echo "adding barcodelabel to identify which barcode 01-48 the sequence belongs to and a label to identify the cluster"
-
-		#sed '/^>/s/>*/>otu='"$clusterName"';barcodelabel=/' "$clusterfolder"/"$outfolder"/polished/renamed/"$clusterID"_quant_newhead.fasta > "$clusterfolder"/"$outfolder"/polished/renamed/"$clusterID"_renamed_newhead.fasta
-        sed '/^>/s/>*/>barcodelabel='"$barcodeID"';otu=clustered/' $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant_oldhead.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_renamed_oldhead.fasta
-
-                echo "addition of barcode label and unique cluster identifiers finished"
-                echo
+echo
+sed '/^>/s/>*/>barcodelabel='"$barcodeID"';otu=clustered/' $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_quant.fasta > $clusterfolder/"$outfolder"/polished/renamed/"$clusterID"_renamed.fasta
+echo "addition of barcode label and unique cluster identifiers finished"
+echo
 
 done
 echo "Concatenate all clusters into one fasta file"
-cat $clusterfolder/"$outfolder"/polished/renamed/*_renamed_oldhead.fasta > $clusterfolder/"$barcodeID"_min"$secondmincluster"_oldhead.fasta
-#cat $clusterfolder/"$outfolder"/polished/renamed/*_renamed_newhead.fasta > $clusterfolder/"$barcodeID"_min"$secondmincluster"_newhead.fasta
-echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_min"$secondmincluster"_oldhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_min"$secondmincluster"_oldhead.fasta)"
-#echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_min"$secondmincluster"_newhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_min"$secondmincluster"_newhead.fasta)"
-
-
+cat $clusterfolder/"$outfolder"/polished/renamed/*_renamed.fasta > $clusterfolder/"$barcodeID"_min"$secondmincluster".fasta
+echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_min"$secondmincluster".fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_min"$secondmincluster".fasta)"
 #  ----------------------------------------------------------------------------
 # now transition to making a file for the sequences below the minimum threshold
 #  ----------------------------------------------------------------------------
@@ -291,8 +259,7 @@ echo $PWD
 #  ----------------------------------------------------------------------------
 # end of for loop to make sure we're in the right directory to write renamed files 
 #  ----------------------------------------------------------------------------
-
-
+echo
 cd $clusterfolder/secondary_clustermin0
 for f in *; do case "$f" in *.*) echo skipped $f;; *) mv "$f" "$barcodeID"_cluster"$f".fasta; esac; done
 
@@ -305,20 +272,14 @@ cd $clusterfolder/secondary_clustersbelow"$secondmincluster"
 echo "Concatenate all secondary clusters below threshold into one fasta file"
 
 cd $clusterfolder/secondary_clustersbelow"$secondmincluster"
-find ./ -type f -name "*.fasta" -exec cat {} + > $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_oldhead.fasta
-echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_oldhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_oldhead.fasta)"
-#find ./ -type f -name "*_newhead.fasta" -exec cat {} + > $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_newhead.fasta
-#echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_newhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_newhead.fasta)"
-
+find ./ -type f -name "*.fasta" -exec cat {} + > $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs.fasta
+echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs.fasta)"
 
 #  ----------------------------------------------------------------------------
 # Clean up the folders 
 #  ----------------------------------------------------------------------------
 
 cd $clusterfolder 
-#mkdir $clusterfolder/clustersbelow"$secondmincluster"/clustersbelow"$secondmincluster" # too many files for this to work on  
-#mv clustersbelow"$secondmincluster"/*fasta clustersbelow"$secondmincluster"/clustersbelow"$secondmincluster" 
-
 rm -r $clusterfolder/secondary_clustermin0
 
 if [ -f $clusterfolder/secondary_clustersbelow"$secondmincluster".zip ] ; then 
@@ -337,13 +298,9 @@ rm -r polished
 zip -r referenceFASTA.zip referenceFASTA
 rm -r referenceFASTA
 
-echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_oldhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_oldhead.fasta)"
-#echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_newhead.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs_newhead.fasta)"
+echo "Number of fasta seqs in $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs.fasta: $(grep -c ">" $clusterfolder/"$barcodeID"_belowmin"$secondmincluster"seqs.fasta)"
 
 echo "SLURM_JOBID: " $SLURM_JOBID
 echo "SLURM_ARRAY_TASK_ID: " $SLURM_ARRAY_TASK_ID
 echo "SLURM_ARRAY_JOB_ID: " $SLURM_ARRAY_JOB_ID
 echo $(date)
-
-## edited 12/18/2023 to adjust job name and add more partitions 
-## edited 1/23/2024 to add module load compatbin (for bc for counting fastq seqs)

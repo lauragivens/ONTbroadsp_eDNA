@@ -1,29 +1,9 @@
 #!/bin/bash
   
 #SBATCH --job-name=Template_seqtabqiime_min
-#SBATCH --account=schultzlab -p schultzlab,nsoe-it,common
-#SBATCH --output=/path_to_sequences/outfile/Template_seqtabqiime.out
-#SBATCH --error=/path_to_sequences/outfile/Template_seqtabqiime.err
-#SBATCH --ntasks=10
-#SBATCH --mem=15G
-#SBATCH --mail-type=END,FAIL
-#SBATCH --mail-user=lag66@duke.edu
-
-# the fastest way to rename paths in this script is to Find "/work/lag66/AugAG" and Replace it with what corresponds to your "/work/NETID/RUN1" # 
-
-# ---------------------------------------------------------------------------------------------------------------------
-################ step 6 ## otu table generation and qiime tax assignment ################
-## FASTQ files demultiplexed and barcodes removed by GridION MinKNOW ##
-## transferred to DCC /work/lag66/fastq_pass
-## Barcode files were concatenated and filtered by size in preprocessing step
-## then used cd-hit to cluster sequences in each barcode by 90% similarity
-## then only clusters with >mincluster sequences in them are selected for mapping and polishing
-## then consensus sequences were polished with racon and concatenated into one fasta file per barcode
 
 ## in this step, you are building a table that reports what sequences occur in each barcode
-source /hpc/group/schultzlab/lag66/miniconda3/etc/profile.d/conda.sh
-# --------------------------------------- To Do ---------------------------------------
-# rename the following 
+#source /conda/location/path
 
 d='/path_to_sequences'
 mincluster=10
@@ -43,14 +23,14 @@ echo "Merge all samples"
 
 # However, we are using the sequences that did not pass the first clustering threshold to make the OTU table. There are no additional sequences from the second round of clustering to add to those files
 
-cat barcode0*/*min"$secondmincluster"_oldhead.fasta barcode0*/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode10/*min"$secondmincluster"_oldhead.fasta barcode10/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode11/*min"$secondmincluster"_oldhead.fasta barcode11/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode12/*min"$secondmincluster"_oldhead.fasta barcode12/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode13/*min"$secondmincluster"_oldhead.fasta barcode13/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode14/*min"$secondmincluster"_oldhead.fasta barcode14/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode15/*min"$secondmincluster"_oldhead.fasta barcode15/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode16/*min"$secondmincluster"_oldhead.fasta barcode16/*belowmin"$secondmincluster"seqs_oldhead.fasta > "$primer2"_mapped_polished.fasta #fasta file with barcodeID_seqID; size=N
+cat barcode0*/*min"$secondmincluster".fasta barcode0*/*belowmin"$secondmincluster"seqs.fasta barcode10/*min"$secondmincluster".fasta barcode10/*belowmin"$secondmincluster"seqs.fasta barcode11/*min"$secondmincluster".fasta barcode11/*belowmin"$secondmincluster"seqs.fasta barcode12/*min"$secondmincluster".fasta barcode12/*belowmin"$secondmincluster"seqs.fasta barcode13/*min"$secondmincluster".fasta barcode13/*belowmin"$secondmincluster"seqs.fasta barcode14/*min"$secondmincluster".fasta barcode14/*belowmin"$secondmincluster"seqs.fasta barcode15/*min"$secondmincluster".fasta barcode15/*belowmin"$secondmincluster"seqs.fasta barcode16/*min"$secondmincluster".fasta barcode16/*belowmin"$secondmincluster"seqs.fasta > "$primer2"_mapped_polished.fasta #fasta file with barcodeID_seqID; size=N
 
-cat barcode17/*min"$secondmincluster"_oldhead.fasta barcode17/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode18/*min"$secondmincluster"_oldhead.fasta barcode18/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode19/*min"$secondmincluster"_oldhead.fasta barcode19/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode2*/*min"$secondmincluster"_oldhead.fasta barcode2*/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode30/*min"$secondmincluster"_oldhead.fasta barcode30/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode31/*min"$secondmincluster"_oldhead.fasta barcode31/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode32/*min"$secondmincluster"_oldhead.fasta barcode32/*belowmin"$secondmincluster"seqs_oldhead.fasta > "$primer1"_mapped_polished.fasta #fasta file with barcodeID_seqID; size=N
+cat barcode17/*min"$secondmincluster".fasta barcode17/*belowmin"$secondmincluster"seqs.fasta barcode18/*min"$secondmincluster".fasta barcode18/*belowmin"$secondmincluster"seqs.fasta barcode19/*min"$secondmincluster".fasta barcode19/*belowmin"$secondmincluster"seqs.fasta barcode2*/*min"$secondmincluster".fasta barcode2*/*belowmin"$secondmincluster"seqs.fasta barcode30/*min"$secondmincluster".fasta barcode30/*belowmin"$secondmincluster"seqs.fasta barcode31/*min"$secondmincluster".fasta barcode31/*belowmin"$secondmincluster"seqs.fasta barcode32/*min"$secondmincluster".fasta barcode32/*belowmin"$secondmincluster"seqs.fasta > "$primer1"_mapped_polished.fasta #fasta file with barcodeID_seqID; size=N
 
-cat barcode33/*min"$secondmincluster"_oldhead.fasta barcode33/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode34/*min"$secondmincluster"_oldhead.fasta barcode34/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode35/*min"$secondmincluster"_oldhead.fasta barcode35/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode36/*min"$secondmincluster"_oldhead.fasta barcode36/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode37/*min"$secondmincluster"_oldhead.fasta barcode37/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode38/*min"$secondmincluster"_oldhead.fasta barcode38/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode39/*min"$secondmincluster"_oldhead.fasta barcode39/*belowmin"$secondmincluster"seqs_oldhead.fasta barcode4*/*min"$secondmincluster"_oldhead.fasta barcode4*/*belowmin"$secondmincluster"seqs_oldhead.fasta > "$primer3"_mapped_polished.fasta #fasta file with barcodeID_seqID; size=N 
+cat barcode33/*min"$secondmincluster".fasta barcode33/*belowmin"$secondmincluster"seqs.fasta barcode34/*min"$secondmincluster".fasta barcode34/*belowmin"$secondmincluster"seqs.fasta barcode35/*min"$secondmincluster".fasta barcode35/*belowmin"$secondmincluster"seqs.fasta barcode36/*min"$secondmincluster".fasta barcode36/*belowmin"$secondmincluster"seqs.fasta barcode37/*min"$secondmincluster".fasta barcode37/*belowmin"$secondmincluster"seqs.fasta barcode38/*min"$secondmincluster".fasta barcode38/*belowmin"$secondmincluster"seqs.fasta barcode39/*min"$secondmincluster".fasta barcode39/*belowmin"$secondmincluster"seqs.fasta barcode4*/*min"$secondmincluster".fasta barcode4*/*belowmin"$secondmincluster"seqs.fasta > "$primer3"_mapped_polished.fasta #fasta file with barcodeID_seqID; size=N 
 
 # sequences below threshold  
-cat barcode*/*belowmin"$mincluster"seqs_oldhead.fasta > clustersbelowmin"$mincluster"threshold.fasta
+cat barcode*/*belowmin"$mincluster"seqs.fasta > clustersbelowmin"$mincluster"threshold.fasta
 
 echo Number of "$primer1" OTUs after merging: $(grep -c ">" "$primer1"_mapped_polished.fasta)
 echo Number of "$primer2" OTUs after merging: $(grep -c ">" "$primer2"_mapped_polished.fasta)
@@ -116,17 +96,6 @@ qiime tools import \
 # --------------------------------------------------------------------------------------------- #
 ########### step 5 classify reads ###########
 
-## qiime feature-classifier classify-sklearn
-### this is a naive bayes
-
-## qiime feature-classifier classify-consensus-blast
-### assigns taxonomy based on BLAST+ local alignment between query and reference_reads
-
- #qiime feature-classifier classify-sklearn --i-reads "$output".qiimeready.qza \
-  #      --i-classifier /hpc/group/schultzlab/lag66/TrainedClassifiers/qiimeNCBI-12S-refseqs-classifier.qza \
-   #             --o-classification "$output".cluster10.taxonomy.qza #\
-                        #--p-n-jobs -1 --verbose
-
   qiime feature-classifier classify-consensus-blast --i-query "$outputprimer1".qiimeready.qza \
          --i-reference-reads /hpc/group/schultzlab/lag66/qiimeNCBI_"$primer1"_derep_seqs.qza \
          --i-reference-taxonomy /hpc/group/schultzlab/lag66/qiimeNCBI_"$primer1"_derep_tax.qza \
@@ -169,12 +138,5 @@ qiime tools export \
  mv "$primer3"blasttaxonomy/taxonomy.tsv "$primer3".qiimeblast.taxonomy.tsv
 rm -r "$primer3"blasttaxonomy
 
-
-
 echo "SLURM_JOBID: " $SLURM_JOBID
 echo $(date)
-
-
-## edited 12/18/2023 to adjust job name and add partitions
-
-
