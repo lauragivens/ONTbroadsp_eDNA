@@ -38,11 +38,7 @@ echo "MiFish primers estimated 135 bp without indices etc; filtered between 100-
 echo "Forward primer length: 21 bp"
 echo "Reverse primer length: 27 bp"
 echo 
-echo "Folmer primers estimated 700 bp; should be filtered between 600-900"
-echo "Forward primer length: 25 bp"
-echo "Reverse primer length: 26 bp"
-echo
-echo "Leray, 18S 1F/400R, and UPA primers estimated 300-400 bp; should be filtered between 300-600"
+echo "Leray and 18S 1F/400R primers estimated 300-400 bp; should be filtered between 300-600"
 echo "Leray Forward primer length: 26 bp"
 echo "Leray Reverse primer length: 26 bp"
 echo "18S Forward primer length: 22 bp"
@@ -65,10 +61,3 @@ fi
 conda deactivate
 
 echo $(date)
-
-# ----------------------------------------------------------------------------------
-## edited 07/01/22 to add SLURM output echo and IF/ELSE test
-## edited 08/25/22 to add directory commands, length variables and report desired lengths of each primer set
-## edited 09/05/22 to add head/tail primer trimming commands
-## edited 04/24/23 to expand MiFish parameters  
-## edited 12/18/23 to adjust job name and add more partitions
