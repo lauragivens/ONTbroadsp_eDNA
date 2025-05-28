@@ -2,7 +2,7 @@
 
 Data and scripts needed to process environmental DNA metabarcoding output from Oxford Nanopore Technology sequencing, used in the manuscript by Givens et al, 2025. These scripts were run on a high-performance computing cluster.
 
-This workflow starts with the output from [n] GridION R9.4 flow cell runs. Reads were demultiplexed locally with MinKNOW v.[??] and the indexed barcodes were removed. 
+This workflow starts with the output from GridION R9.4 flow cell runs. Reads were demultiplexed locally with MinKNOW v.21.05.20, equipped with Guppy v5.0.13 using the high-accuracy basecalling model and a quality minimum Q-score cutoff of 9. 
 
 # Dependencies  
 
