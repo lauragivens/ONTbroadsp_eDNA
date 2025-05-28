@@ -46,14 +46,14 @@ echo "test to subsample reads"
 echo
 if (($NUMfastq > $maxseq)) ; then
 	echo " "$NanofiltFILE" contains "$NUMfastq" reads"
-	echo "randomly subsample Nanofilt reads to max 200k of "$barcodeID".fastq"
+	echo "randomly subsample Nanofilt reads of "$barcodeID".fastq"
 	echo "set random seed = 123"
-	seqtk sample -s123 $d/Nanofilt/"$barcodeID".fastq 200000 > $d/Nanofilt/"$barcodeID"_sub200k.fastq
+	seqtk sample -s123 $d/Nanofilt/"$barcodeID".fastq $maxseq > $d/Nanofilt/"$barcodeID"_sub.fastq
 
 	echo "converting subsampled Nanofilt fastq files to fasta"
-	seqtk seq -a $d/Nanofilt/"$barcodeID"_sub200k.fastq > $d/Nanofilt/"$barcodeID"_sub200k.fasta
+	seqtk seq -a $d/Nanofilt/"$barcodeID"_sub.fastq > $d/Nanofilt/"$barcodeID"_sub.fasta
 	
-	fasta=""$d"/Nanofilt/"$barcodeID"_sub200k.fasta"
+	fasta=""$d"/Nanofilt/"$barcodeID"_sub.fasta"
 else
 	echo " "$NanofiltFILE" contains "$NUMfastq" reads"
 	echo "will not subsample"
